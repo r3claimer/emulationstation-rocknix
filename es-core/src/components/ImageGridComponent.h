@@ -121,7 +121,7 @@ private:
 	void updateTileAtPos(int tilePos, int imgPos, bool allowAnimation = true, bool updateSelectedState = true);
 	void calcGridDimension();
 	
-	bool isVertical() { return mScrollDirection == SCROLL_VERTICALLY; };
+	inline bool isVertical() { return mScrollDirection == SCROLL_VERTICALLY; };
 
 	bool mEntriesDirty;
 	
@@ -751,6 +751,8 @@ void ImageGridComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, 
 template<typename T>
 void ImageGridComponent<T>::onSizeChanged()
 {
+	IList::onSizeChanged();
+
 	if (mTheme == nullptr)
 		return;
 
