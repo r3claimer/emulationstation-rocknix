@@ -17,7 +17,7 @@ bool GuiComponent::isLaunchTransitionRunning = false;
 GuiComponent::GuiComponent(Window* window) : mWindow(window), mParent(NULL), mOpacity(255),
 	mPosition(Vector3f::Zero()), mOrigin(Vector2f::Zero()), mRotationOrigin(0.5, 0.5), mScaleOrigin(0.5f, 0.5f),
 	mSize(Vector2f::Zero()), mTransform(Transform4x4f::Identity()), mIsProcessing(false), mVisible(true), mShowing(false),
-	mStaticExtra(false), mStoryboardAnimator(nullptr), mScreenOffset(0.0f), mTransformDirty(true)
+	mStaticExtra(false), mStoryboardAnimator(nullptr), mScreenOffset(0.0f)
 {
 	mClipRect = Vector4f();
 }
@@ -89,11 +89,11 @@ void GuiComponent::render(const Transform4x4f& parentTrans)
 
 	Transform4x4f trans = parentTrans * getTransform();
 
-	if (!Renderer::isVisibleOnScreen(trans.translation().x(), trans.translation().y(), mSize.x() * trans.r0().x(), mSize.y() * trans.r1().y()))
+	if (!Renderer::isVisibleOnScreen(trans.translation().x(), trans.translation().y(), mSize.x(), mSize.y()))
 		return;
 	
 	if (!mClipRect.empty() && !GuiComponent::isLaunchTransitionRunning)
-		Renderer::pushClipRect(mClipRect.x(), mClipRect.y(), mClipRect.z(), mClipRect.w());
+		Renderer::pushClipRect(Vector2i(mClipRect.x(), mClipRect.y()), Vector2i(mClipRect.z(), mClipRect.w()));
 
 	renderChildren(trans);
 
@@ -104,8 +104,7 @@ void GuiComponent::render(const Transform4x4f& parentTrans)
 void GuiComponent::renderChildren(const Transform4x4f& transform) const
 {
 	for (auto child : mChildren)
-		if (child->mVisible)
-			TRYCATCH("GuiComponent::renderChildren", child->render(transform));
+		TRYCATCH("GuiComponent::renderChildren", child->render(transform));
 }
 
 Vector3f GuiComponent::getPosition() const
@@ -115,12 +114,8 @@ Vector3f GuiComponent::getPosition() const
 
 void GuiComponent::setPosition(float x, float y, float z)
 {
-	auto position = Vector3f(x, y, z);
-	if (position == mPosition)
-		return;
-	
-	mPosition = position;
-	onPositionChanged();	
+	mPosition = Vector3f(x, y, z);
+	onPositionChanged();
 }
 
 Vector2f GuiComponent::getOrigin() const
@@ -130,11 +125,7 @@ Vector2f GuiComponent::getOrigin() const
 
 void GuiComponent::setOrigin(float x, float y)
 {
-	auto origin = Vector2f(x, y);
-	if (origin == mOrigin)
-		return;
-
-	mOrigin = origin;
+	mOrigin = Vector2f(x, y);
 	onOriginChanged();
 }
 
@@ -145,12 +136,7 @@ Vector2f GuiComponent::getRotationOrigin() const
 
 void GuiComponent::setRotationOrigin(float x, float y)
 {
-	auto origin = Vector2f(x, y);
-	if (origin == mRotationOrigin)
-		return;
-
-	mRotationOrigin = origin;
-	onRotationOriginChanged();
+	mRotationOrigin = Vector2f(x, y);
 }
 
 Vector2f GuiComponent::getSize() const
@@ -160,11 +146,7 @@ Vector2f GuiComponent::getSize() const
 
 void GuiComponent::setSize(float w, float h)
 {
-	auto size = Vector2f(w, h);
-	if (size == mSize)
-		return;
-
-	mSize = size;
+	mSize = Vector2f(w, h);
     onSizeChanged();
 }
 
@@ -175,11 +157,7 @@ float GuiComponent::getRotation() const
 
 void GuiComponent::setRotation(float rotation)
 {
-	if (rotation == mRotation)
-		return;
-
 	mRotation = rotation;
-	onRotationChanged();
 }
 
 float GuiComponent::getScale() const
@@ -189,11 +167,7 @@ float GuiComponent::getScale() const
 
 void GuiComponent::setScale(float scale)
 {
-	if (scale == mScale)
-		return;
-
 	mScale = scale;
-	onScaleChanged();
 }
 
 Vector2f GuiComponent::getScaleOrigin() const
@@ -203,25 +177,7 @@ Vector2f GuiComponent::getScaleOrigin() const
 
 void GuiComponent::setScaleOrigin(const Vector2f& scaleOrigin)
 {
-	if (scaleOrigin == mScaleOrigin)
-		return;
-
 	mScaleOrigin = scaleOrigin;
-	onScaleOriginChanged();
-}
-
-Vector2f GuiComponent::getScreenOffset() const
-{
-	return mScreenOffset;
-}
-
-void GuiComponent::setScreenOffset(const Vector2f& screenOffset)
-{
-	if (screenOffset == mScreenOffset)
-		return;
-
-	mScreenOffset = screenOffset;
-	onScreenOffsetChanged();
 }
 
 float GuiComponent::getZIndex() const
@@ -376,17 +332,19 @@ const Transform4x4f& GuiComponent::getTransform()
 
 		// transform to offset point
 		if (xOff != 0.0 || yOff != 0.0)
-			mTransform.translate(xOff * -1, yOff * -1);
+			mTransform.translate(Vector3f(xOff * -1, yOff * -1, 0.0f));
 
 		// apply rotation transform
 		mTransform.rotateZ(mRotation);
 
 		// Tranform back to original point
 		if (xOff != 0.0 || yOff != 0.0)
-			mTransform.translate(xOff, yOff);
+			mTransform.translate(Vector3f(xOff, yOff, 0.0f));
 	}
 
-	mTransform.translate(mOrigin.x() * mSize.x() * -1, mOrigin.y() * mSize.y() * -1);	
+	mTransform.translate(Vector3f(mOrigin.x() * mSize.x() * -1, mOrigin.y() * mSize.y() * -1, 0.0f));
+
+
 	return mTransform;
 }
 
@@ -709,19 +667,19 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 	if (properties & POSITION && elem->has("offset"))
 	{
 		Vector2f denormalized = elem->get<Vector2f>("offset") * screenScale;
-		setScreenOffset(denormalized);
+		mScreenOffset = denormalized;
 	}
 
 	if (properties & POSITION && elem->has("offsetX"))
 	{
 		float denormalized = elem->get<float>("offsetX") * screenScale.x();
-		setScreenOffset(Vector2f(denormalized, mScreenOffset.y()));
+		mScreenOffset = Vector2f(denormalized, mScreenOffset.y());
 	}
 
 	if (properties & POSITION && elem->has("offsetY"))
 	{
 		float denormalized = elem->get<float>("offsetY") * scale.y();
-		setScreenOffset(Vector2f(mScreenOffset.x(), denormalized));
+		mScreenOffset = Vector2f(mScreenOffset.x(), denormalized);
 	}
 
 	if (properties & POSITION && elem->has("clipRect"))
@@ -733,7 +691,6 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 		setClipRect(Vector4f());
 
 	applyStoryboard(elem);
-	mTransformDirty = true;
 }
 
 void GuiComponent::updateHelpPrompts()
@@ -997,18 +954,16 @@ void GuiComponent::setProperty(const std::string name, const ThemeData::ThemeEle
 		setScaleOrigin(Vector2f(value.v.x(), value.v.y()));
 
 	if (name == "offset" && value.type == ThemeData::ThemeElement::Property::PropertyType::Pair)
-		setScreenOffset(Vector2f(value.v.x() * screenScale.x(), value.v.y() * screenScale.y()));
+		mScreenOffset = Vector2f(value.v.x() * screenScale.x(), value.v.y() * screenScale.y());
 	
 	if (name == "offsetX" && value.type == ThemeData::ThemeElement::Property::PropertyType::Float)
-		setScreenOffset(Vector2f(value.f * screenScale.x(), mScreenOffset.y()));
+		mScreenOffset = Vector2f(value.f * screenScale.x(), mScreenOffset.y());
 
 	if (name == "offsetY" && value.type == ThemeData::ThemeElement::Property::PropertyType::Float)
-		setScreenOffset(Vector2f(mScreenOffset.x(), value.f * screenScale.y()));
+		mScreenOffset = Vector2f(mScreenOffset.x(), value.f * screenScale.y());
 
 	if (name == "clipRect" && value.type == ThemeData::ThemeElement::Property::PropertyType::Rect)
 		setClipRect(Vector4f(value.r.x() * screenScale.x(), value.r.y() * screenScale.y(), value.r.z() * screenScale.x(), value.r.w() * screenScale.y()));
-
-	mTransformDirty = true;
 }
 
 void GuiComponent::setClipRect(const Vector4f& vec)
@@ -1046,7 +1001,7 @@ void GuiComponent::beginCustomClipRect()
 		mTransform.translate(Vector3f(mOrigin.x() * mSize.x() * -1, mOrigin.y() * mSize.y() * -1, 0.0f));
 	}*/
 
-	Renderer::pushClipRect(mClipRect.x(), mClipRect.y(), mClipRect.z(), mClipRect.w());
+	Renderer::pushClipRect(Vector2i(mClipRect.x(), mClipRect.y()), Vector2i(mClipRect.z(), mClipRect.w()));
 }
 
 void GuiComponent::endCustomClipRect()
@@ -1054,44 +1009,3 @@ void GuiComponent::endCustomClipRect()
 	if (!mClipRect.empty() && !GuiComponent::isLaunchTransitionRunning)
 		Renderer::popClipRect();
 }
-
-void GuiComponent::onPositionChanged() 
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onOriginChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onRotationOriginChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onSizeChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onRotationChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onScaleChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onScaleOriginChanged()
-{
-	mTransformDirty = true;
-}
-
-void GuiComponent::onScreenOffsetChanged()
-{
-	mTransformDirty = true;
-}
-
