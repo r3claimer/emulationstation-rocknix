@@ -41,7 +41,10 @@ public:
 	DEFINE_BOOL_SETTING(ShowHiddenFiles)
 	DEFINE_BOOL_SETTING(HiddenSystemsShowGames)
 	DEFINE_BOOL_SETTING(AllImagesAsync)
-		
+
+	DEFINE_BOOL_SETTING(ShowControllerActivity)
+	DEFINE_BOOL_SETTING(ShowControllerBattery)
+
 	DEFINE_STRING_SETTING(HiddenSystems)
 	DEFINE_STRING_SETTING(TransitionStyle)
 	DEFINE_STRING_SETTING(GameTransitionStyle)		

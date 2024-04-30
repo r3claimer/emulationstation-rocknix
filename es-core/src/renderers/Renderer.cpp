@@ -220,16 +220,6 @@ namespace Renderer
 		setSwapInterval();
 		swapBuffers();
 
-#if WIN32
-		if (windowFlags & SDL_WINDOW_BORDERLESS)
-		{			
-			// If we don't do that, with some machines, the screen stays black... (Ambernic Win600)
-			SDL_SetWindowBordered(sdlWindow, SDL_bool::SDL_TRUE);
-			SDL_SetWindowBordered(sdlWindow, SDL_bool::SDL_FALSE);
-			SDL_SetWindowPosition(sdlWindow, sdlWindowPosition.x(), sdlWindowPosition.y());
-		}
-#endif
-
 		return true;
 
 	} // createWindow

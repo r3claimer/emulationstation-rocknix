@@ -246,6 +246,8 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 
 void GuiInputConfig::onSizeChanged()
 {
+	GuiComponent::onSizeChanged();
+
 	mBackground.fitTo(mSize, Vector3f::Zero(), Vector2f(-32, -32));
 
 	// update grid
