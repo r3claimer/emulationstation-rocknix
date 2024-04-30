@@ -121,7 +121,7 @@ private:
 	void updateTileAtPos(int tilePos, int imgPos, bool allowAnimation = true, bool updateSelectedState = true);
 	void calcGridDimension();
 	
-	inline bool isVertical() { return mScrollDirection == SCROLL_VERTICALLY; };
+	bool isVertical() { return mScrollDirection == SCROLL_VERTICALLY; };
 
 	bool mEntriesDirty;
 	
@@ -470,8 +470,9 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 
 	// Render the selected image background on bottom of the others if needed
 	std::shared_ptr<GridTileComponent> selectedTile = NULL;
-	for (auto tile : mTiles)
+	for(auto it = mTiles.begin(); it != mTiles.end(); it++)
 	{
+		std::shared_ptr<GridTileComponent> tile = (*it);
 		if (tile->isSelected())
 		{
 			selectedTile = tile;
@@ -483,9 +484,12 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 		}
 	}
 	
-	for (auto tile : mTiles)
-		if (tile != selectedTile)
+	for (auto it = mTiles.begin(); it != mTiles.end(); it++)
+	{
+		std::shared_ptr<GridTileComponent> tile = (*it);
+		if (!tile->isSelected())
 			tile->render(tileTrans);
+	}
 
 	// Render the selected image content on top of the others
 	if (selectedTile != NULL)
@@ -751,8 +755,6 @@ void ImageGridComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, 
 template<typename T>
 void ImageGridComponent<T>::onSizeChanged()
 {
-	IList::onSizeChanged();
-
 	if (mTheme == nullptr)
 		return;
 
