@@ -435,7 +435,7 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 	float offsetX = isVertical() ? 0 : mCamera * mCameraDirection * (mTileSize.x() + mMargin.x());
 	float offsetY = isVertical() ? mCamera * mCameraDirection * (mTileSize.y() + mMargin.y()) : 0;
 	
-	tileTrans.translate(offsetX, offsetY);
+	tileTrans.translate(Vector3f(offsetX, offsetY, 0.0));
 
 	if (mEntriesDirty && !(((GuiComponent*)this)->isAnimationPlaying(2)))
 	{
@@ -444,8 +444,11 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 	}
 
 	// Create a clipRect to hide tiles used to buffer texture loading
+	float scaleX = trans.r0().x();
+	float scaleY = trans.r1().y();
+
 	Vector2i pos((int)Math::round(trans.translation()[0]), (int)Math::round(trans.translation()[1]));
-	Vector2i size((int)Math::round(mSize.x() * trans.r0().x()), (int)Math::round(mSize.y() * trans.r1().y()));
+	Vector2i size((int)Math::round(mSize.x() * scaleX), (int)Math::round(mSize.y() * scaleY));
 
 	if (Settings::DebugGrid)
 	{
@@ -751,8 +754,6 @@ void ImageGridComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, 
 template<typename T>
 void ImageGridComponent<T>::onSizeChanged()
 {
-	IList::onSizeChanged();
-
 	if (mTheme == nullptr)
 		return;
 
