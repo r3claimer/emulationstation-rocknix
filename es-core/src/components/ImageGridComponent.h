@@ -470,9 +470,8 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 
 	// Render the selected image background on bottom of the others if needed
 	std::shared_ptr<GridTileComponent> selectedTile = NULL;
-	for(auto it = mTiles.begin(); it != mTiles.end(); it++)
+	for (auto tile : mTiles)
 	{
-		std::shared_ptr<GridTileComponent> tile = (*it);
 		if (tile->isSelected())
 		{
 			selectedTile = tile;
@@ -484,12 +483,9 @@ void ImageGridComponent<T>::render(const Transform4x4f& parentTrans)
 		}
 	}
 	
-	for (auto it = mTiles.begin(); it != mTiles.end(); it++)
-	{
-		std::shared_ptr<GridTileComponent> tile = (*it);
-		if (!tile->isSelected())
+	for (auto tile : mTiles)
+		if (tile != selectedTile)
 			tile->render(tileTrans);
-	}
 
 	// Render the selected image content on top of the others
 	if (selectedTile != NULL)
